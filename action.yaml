@@ -1,0 +1,32 @@
+name: "Dagger Version"
+description: "Get the required Dagger version from dagger.json of a project"
+
+runs:
+  using: composite
+
+  steps:
+    - name: Get dagger.json and the version field
+      id: get_version
+      uses: actions/github-script@v6
+      with:
+        script: |
+          try {
+            const response = await github.rest.repos.getContent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path: 'dagger.json',
+              ref: context.ref,
+            });
+
+            // The content is base64 encoded
+            const content = Buffer.from(response.data.content, 'base64').toString('utf8');
+            const data = JSON.parse(content);
+
+            core.setOutput('version', data.engineVersion);
+          } catch (error) {
+            if (error.status === 404) {
+              core.setFailed('Error: dagger.json not found in the repository.');
+            } else {
+              core.setFailed(`An error occurred: ${error.message}`);
+            }
+          }
