@@ -1,5 +1,8 @@
 name: "Dagger Version"
 description: "Get the required Dagger version from dagger.json"
+branding:
+  icon: "tag"
+  color: "blue"
 
 runs:
   using: composite
