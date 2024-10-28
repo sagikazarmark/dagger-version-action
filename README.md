@@ -1,14 +1,16 @@
 # GitHub Action to get the required [Dagger](https://dagger.io/) version
 
-This action gets the `engineVersion` field from the `dagger.json` file of a repository.
+This action gets the `engineVersion` field from the `dagger.json` file of a
+repository.
 
 It supports workflows with and without checking out the repository first:
 
-- If the repository is with a `dagger.json` file is present, the action will get the `engineVersion` field from it
-- If there is no checked out repository, the action will use the Contents API to get the `dagger.json` file
+- If the repository is with a `dagger.json` file is present, the action will get
+  the `engineVersion` field from it
+- If there is no checked out repository, the action will use the Contents API to
+  get the `dagger.json` file
 
 ## Usage
-
 
 ```yaml
 name: CI

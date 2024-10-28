@@ -1,76 +1,19 @@
-name: "Dagger Version"
-description: "Get the required Dagger version from dagger.json"
+name: 'Dagger Version'
+description: 'Get the required Dagger version from dagger.json'
 branding:
-  icon: "tag"
-  color: "blue"
+  icon: 'tag'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'The GitHub token used to create an authenticated client'
+    default: ${{ github.token }}
+    required: false
+
+outputs:
+  time:
+    description: 'Dagger version detected in dagger.json'
 
 runs:
-  using: composite
-
-  steps:
-    - name: Get Version from dagger.json
-      id: get_version
-      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea #v7.0.1
-      with:
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-
-          const filePath = path.join(process.env.GITHUB_WORKSPACE, 'dagger.json');
-
-          if (fs.existsSync(filePath)) { // File exists locally, read from the local file system
-            const content = fs.readFileSync(filePath, 'utf8');
-            let data;
-
-            try {
-              data = JSON.parse(content);
-
-              if (!data.engineVersion) {
-                core.setFailed('Error: "engineVersion" field is missing in local dagger.json.');
-              } else {
-                core.setOutput('version', data.engineVersion);
-                console.log('Version obtained from local file.');
-              }
-            } catch (parseError) {
-              core.setFailed('Error parsing local dagger.json: ' + parseError.message);
-            }
-          } else { // File doesn't exist locally, fetch using GitHub API
-            console.log('Local dagger.json not found. Fetching via GitHub API...');
-
-            try {
-              const response = await github.rest.repos.getContent({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                path: 'dagger.json',
-                ref: context.ref,
-              });
-
-              // The content is base64 encoded
-              const content = Buffer.from(response.data.content, 'base64').toString('utf8');
-              let data;
-
-              try {
-                data = JSON.parse(content);
-
-                if (!data.engineVersion) {
-                  core.setFailed('Error: "engineVersion" field is missing in dagger.json fetched via API.');
-                } else {
-                  core.setOutput('version', data.enginerVersion);
-                  console.log('Version obtained from GitHub API.');
-                }
-              } catch (parseError) {
-                core.setFailed('Error parsing dagger.json fetched via API: ' + parseError.message);
-              }
-            } catch (error) {
-              if (error.status === 404) {
-                core.setFailed('Error: dagger.json not found in the repository via GitHub API.');
-              } else {
-                core.setFailed(`An error occurred while fetching dagger.json via API: ${error.message}`);
-              }
-            }
-          }
-
-    - name: Dagger Version
-      shell: bash
-      if: success()
-      run: 'echo "Dagger version: ${{ steps.get_version.outputs.version }}"'
+  using: node20
+  main: dist/index.js
