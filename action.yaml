@@ -71,7 +71,7 @@ runs:
                 if (!data.engineVersion) {
                   core.setFailed(`Error: "engineVersion" field is missing in dagger.json fetched via API from path: ${apiPath}`);
                 } else {
-                  core.setOutput('version', data.engineVersion); // Fixed typo: enginerVersion -> engineVersion
+                  core.setOutput('version', data.engineVersion);
                   console.log(`Version obtained from GitHub API from path: ${apiPath}`);
                 }
               } catch (parseError) {
