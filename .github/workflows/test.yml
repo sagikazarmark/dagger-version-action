@@ -1,0 +1,79 @@
+name: Test Dagger Version Action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-action:
+    name: Test Action
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_repository: ['dagger/agents', 'dagger/registry-redirect']
+        include:
+          - test_repository: 'dagger/agents'
+            test_paths: 'melvin,multiagent-demo'
+          - test_repository: 'dagger/registry-redirect'
+            test_paths: '.'
+
+    steps:
+      - name: Checkout dagger-version-action
+        uses: actions/checkout@v4
+
+      # Test without checkout (using API)
+      - name: Test API access (no checkout)
+        id: dagger_version_api
+        uses: ./
+        with:
+          repository: ${{ matrix.test_repository }}
+          path: ${{ contains(matrix.test_paths, ',') && split(matrix.test_paths, ',')[0] || matrix.test_paths }}
+
+      - name: Display API result
+        run: |
+          echo "Dagger version (API access): ${{ steps.dagger_version_api.outputs.version }}"
+
+      # Test with additional paths via API
+      - name: Test API access with alternate path
+        id: dagger_version_api_path
+        if: contains(matrix.test_paths, ',')
+        uses: ./
+        with:
+          repository: ${{ matrix.test_repository }}
+          path: ${{ split(matrix.test_paths, ',')[1] }}
+
+      - name: Display API with path result
+        if: contains(matrix.test_paths, ',')
+        run: |
+          echo "Dagger version (API access with path): ${{ steps.dagger_version_api_path.outputs.version }}"
+
+      # Test with checkout
+      - name: Checkout test repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.test_repository }}
+          path: test-repo
+
+      - name: Test with checkout (default path)
+        id: dagger_version_checkout
+        uses: ./
+        with:
+          path: test-repo
+
+      - name: Display checkout result
+        run: |
+          echo "Dagger version (with checkout): ${{ steps.dagger_version_checkout.outputs.version }}"
+
+      # Test with checkout and specific path
+      - name: Test with checkout and specific path
+        id: dagger_version_checkout_path
+        if: contains(matrix.test_paths, ',')
+        uses: ./
+        with:
+          path: test-repo/${{ split(matrix.test_paths, ',')[1] }}
+
+      - name: Display checkout with path result
+        if: contains(matrix.test_paths, ',')
+        run: |
+          echo "Dagger version (checkout with path): ${{ steps.dagger_version_checkout_path.outputs.version }}"          echo "Dagger version (checkout with path): ${{ steps.dagger_version_checkout_path.outputs.version }}"
