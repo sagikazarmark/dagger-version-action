@@ -5,7 +5,7 @@ branding:
   color: "blue"
 
 inputs:
-  path:
+  testPath:
     description: "Path to the directory containing dagger.json (defaults to repository root)"
     required: false
     default: ""
@@ -31,7 +31,7 @@ runs:
           }
           
           // Get the path parameter (defaults to empty string which means root)
-          const dirPath = core.getInput('path');
+          const dirPath = core.getInput('testPath');
           dirPath ? console.log(`Input path parameter: ${dirPath}`) :
             console.log('No path parameter provided')            
           console.log(`Direct env access: "${process.env.INPUT_PATH}"`);
