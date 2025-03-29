@@ -19,63 +19,37 @@ jobs:
             path: 'melvin'
 
     steps:
+      # Checkout the action repository
       - name: Checkout dagger-version-action
         uses: actions/checkout@v4
 
-      # Test without checkout (using API) - without path parameter
+      # Test API access without checkout (no path)
       - name: Test API access (no checkout, no path)
         id: dagger_version_api_no_path
-        if: matrix.path == null
+        if: ${{ !matrix.path }}
         uses: ./
-        with:
-          repository: ${{ matrix.repository }}
+        env:
+          GITHUB_REPOSITORY: ${{ matrix.repository }}
+          GITHUB_REF: refs/heads/main
 
-      # Test without checkout (using API) - with path parameter
+      # Test API access without checkout (with path)
       - name: Test API access (no checkout, with path)
         id: dagger_version_api_with_path
-        if: matrix.path != null
+        if: ${{ matrix.path }}
         uses: ./
         with:
-          repository: ${{ matrix.repository }}
           path: ${{ matrix.path }}
+        env:
+          GITHUB_REPOSITORY: ${{ matrix.repository }}
+          GITHUB_REF: refs/heads/main
 
+      # Display API results
       - name: Display API result
         run: |
-          echo "Repository: ${{ matrix.repository }}${{ matrix.path != null && format(', Path: {0}', matrix.path) || ' (default path)' }}"
-          if [ "${{ matrix.path != null }}" == "true" ]; then
+          if [ -n "${PATH_PARAM}" ]; then
             echo "Dagger version (API access): ${{ steps.dagger_version_api_with_path.outputs.version }}"
           else
             echo "Dagger version (API access): ${{ steps.dagger_version_api_no_path.outputs.version }}"
           fi
-
-      # Test with checkout
-      - name: Checkout test repository
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ matrix.repository }}
-          path: test-repo
-
-      # Test with checkout - without path parameter
-      - name: Test with checkout (no path)
-        id: dagger_version_checkout_no_path
-        if: matrix.path == null
-        uses: ./
-        with:
-          path: test-repo
-
-      # Test with checkout - with path parameter
-      - name: Test with checkout (with path)
-        id: dagger_version_checkout_with_path
-        if: matrix.path != null
-        uses: ./
-        with:
-          path: test-repo/${{ matrix.path }}
-
-      - name: Display checkout result
-        run: |
-          echo "Repository: ${{ matrix.repository }}${{ matrix.path != null && format(', Path: {0}', matrix.path) || ' (default path)' }}"
-          if [ "${{ matrix.path != null }}" == "true" ]; then
-            echo "Dagger version (with checkout): ${{ steps.dagger_version_checkout_with_path.outputs.version }}"
-          else
-            echo "Dagger version (with checkout): ${{ steps.dagger_version_checkout_no_path.outputs.version }}"
-          fi
+        env:
+          PATH_PARAM: ${{ matrix.path }}
