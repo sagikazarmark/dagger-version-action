@@ -33,7 +33,7 @@ jobs:
       # Debug: Check if dagger.json exists in the target repository
       - name: Debug dagger.json
         run: |
-          TARGET_PATH="target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}"
+          TARGET_PATH="target-repo${{ matrix.path_param }}"
           echo "Checking for dagger.json in $TARGET_PATH"
           if [ -f "$TARGET_PATH/dagger.json" ]; then
             echo "dagger.json exists with content:"
@@ -46,7 +46,7 @@ jobs:
       # Debug: Print the path that will be passed to the action
       - name: Debug path parameter
         run: |
-          echo "Path parameter: {{ matrix.path_param }}"
+          echo "Path parameter: ${{ matrix.path_param }}"
 
       # Test with path parameter - use explicit path with quotes
       - name: Test with path parameter
