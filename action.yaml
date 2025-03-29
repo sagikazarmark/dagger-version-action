@@ -22,10 +22,19 @@ runs:
           const fs = require('fs');
           const path = require('path');
           
+          // List all available inputs for debugging
+          console.log('Available inputs:');
+            for (const key in process.env) {
+              if (key.startsWith('INPUT_')) {
+                console.log(`${key}: ${process.env[key]}`);
+              }
+          }
+          
           // Get the path parameter (defaults to empty string which means root)
           const dirPath = core.getInput('path');
           dirPath ? console.log(`Input path parameter: ${dirPath}`) :
             console.log('No path parameter provided')            
+          console.log(`Direct env access: "${process.env.INPUT_PATH}"`);
           
           // Debug environment
           console.log(`GITHUB_WORKSPACE: ${process.env.GITHUB_WORKSPACE}`);
