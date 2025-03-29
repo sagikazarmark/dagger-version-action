@@ -17,17 +17,10 @@ jobs:
         with:
           path: 'action'
 
-      # Checkout the target repository
-      - name: Checkout dagger/registry-redirect
-        uses: actions/checkout@v4
-        with:
-          repository: 'dagger/registry-redirect'
-          path: 'without_path'
-
       # Test with path parameter to the repo root
       - name: Test with repo root path
         id: test_root
-        uses: without_path
+        uses: 'dagger/registry-redirect'
 
       # Display result
       - name: Display test results
@@ -54,17 +47,10 @@ jobs:
         with:
           path: 'action'
 
-      # Checkout the target repository
-      - name: Checkout dagger/agents
-        uses: actions/checkout@v4
-        with:
-          repository: 'dagger/agents'
-          path: 'with_path'
-
       # Test with path parameter to the subdirectory
       - name: Test with subdirectory path
         id: test_subdir
-        uses: with_path
+        uses: 'dagger/agents'
         with:
           path: 'melvin'
 
