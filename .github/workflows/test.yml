@@ -20,7 +20,7 @@ jobs:
       # Test with path parameter to the repo root
       - name: Test with repo root path
         id: test_root
-        uses: 'dagger/registry-redirect'
+        uses: 'dagger/registry-redirect@ef1c26d5fd5312510aaa2adaeee4dd2d2b737d04'
 
       # Display result
       - name: Display test results
@@ -50,7 +50,7 @@ jobs:
       # Test with path parameter to the subdirectory
       - name: Test with subdirectory path
         id: test_subdir
-        uses: 'dagger/agents'
+        uses: 'dagger/agents@16129043e936c3f0c76e48c5207520ba0bcfaec3'
         with:
           path: 'melvin'
 
