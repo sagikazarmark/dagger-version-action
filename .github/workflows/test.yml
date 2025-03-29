@@ -43,10 +43,40 @@ jobs:
             ls -la "$TARGET_PATH"
           fi
 
-      # Debug: Print the path that will be passed to the action
-      - name: Debug path parameter
+      # Create a debug action - this will help us verify input parameters
+      - name: Create debug action
         run: |
-          echo "Path parameter: ${{ matrix.path_param }}"
+          mkdir -p debug-action
+          cat > debug-action/action.yml << 'EOF'
+          name: 'Debug Action'
+          description: 'Debug input parameters'
+          inputs:
+            path:
+              description: 'Path parameter to debug'
+              required: false
+              default: ''
+          runs:
+            using: 'composite'
+            steps:
+              - name: Debug inputs
+                shell: bash
+                run: |
+                  echo "Debug action running"
+                  echo "Input path: '${{ inputs.path }}'"
+                  echo "Path exists: $(test -d '${{ inputs.path }}' && echo 'Yes' || echo 'No')"
+                  echo "Files in path (if exists):"
+                  if [ -d "${{ inputs.path }}" ]; then
+                    ls -la "${{ inputs.path }}"
+                  else
+                    echo "Path does not exist as a directory"
+                  fi
+          EOF
+
+      # Use the debug action with the same parameters we'll use for the real action
+      - name: Debug path parameter
+        uses: ./debug-action
+        with:
+          path: ${{ matrix.path_param }}
 
       # Test with path parameter - use explicit path with quotes
       - name: Test with path parameter
