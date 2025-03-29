@@ -7,7 +7,7 @@ on:
 
 jobs:
   test-with-checkout:
-    name: Test with ${{ matrix.repository }}${{ matrix.path && format(' (Path: {0})', matrix.path) || '' }}
+    name: Test ${{ matrix.repository }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -37,11 +37,11 @@ jobs:
         with:
           path: target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}
       
-      # Display result
+      # Display result with path information
       - name: Display test results
         run: |
           REPO="${{ matrix.repository }}"
-          PATH_INFO="${{ matrix.path && format(' (Path: {0})', matrix.path) || '' }}"
+          PATH_INFO="${{ matrix.path && format(' (Path: {0})', matrix.path) || ' (Root)' }}"
           VERSION="${{ steps.test_path.outputs.version }}"
           
           echo "Repository: $REPO$PATH_INFO"
