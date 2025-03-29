@@ -27,7 +27,7 @@ jobs:
       # Test with path parameter to the repo root
       - name: Test with repo root path
         id: test_root
-        uses: ./without_path/action
+        uses: ./without_path
 
       # Display result
       - name: Display test results
@@ -64,7 +64,7 @@ jobs:
       # Test with path parameter to the subdirectory
       - name: Test with subdirectory path
         id: test_subdir
-        uses: ./with_path/action
+        uses: ./with_path
         with:
           path: 'melvin'
 
