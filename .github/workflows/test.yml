@@ -7,18 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-repositories:
-    name: Test ${{ matrix.repository }}${{ matrix.use_path && ' with path' || ' without path' }}
+  test-registry-redirect:
+    name: Test basic functionality
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - repository: 'dagger/registry-redirect'
-            use_path: false
-          - repository: 'dagger/agents'
-            use_path: true
-            path: 'melvin'
-
     steps:
       # Checkout the action's code
       - name: Checkout action code
@@ -27,27 +18,23 @@ jobs:
           path: 'action'
 
       # Checkout the target repository
-      - name: Checkout ${{ matrix.repository }}
+      - name: Checkout dagger/registry-redirect
         uses: actions/checkout@v4
         with:
-          repository: ${{ matrix.repository }}
-          path: '.'
+          repository: 'dagger/registry-redirect'
+          path: 'without_path'
 
-      # Test with or without path parameter based on matrix
-      - name: Test action
-        id: test_action
-        uses: ./action
-        with:
-          path: ${{ matrix.use_path && matrix.path || '' }}
+      # Test with path parameter to the repo root
+      - name: Test with repo root path
+        id: test_root
+        uses: ./without_path/action
 
       # Display result
       - name: Display test results
         run: |
-          REPO="${{ matrix.repository }}"
-          PATH_INFO="${{ matrix.use_path && format(' (Path: {0})', matrix.path) || ' (Root)' }}"
-          VERSION="${{ steps.test_action.outputs.version }}"
+          VERSION="${{ steps.test_root.outputs.version }}"
           
-          echo "Repository: $REPO$PATH_INFO"
+          echo "Repository: dagger/registry-redirect (dagger.json in root)"
           echo "Dagger version: $VERSION"
           
           # Validate that we got a version
@@ -57,23 +44,67 @@ jobs:
           fi
           echo "✅ Test passed: Version detected as $VERSION"
 
-  test-version-correctness:
-    name: Test with local dagger.json
+  test-agents-melvin:
+    name: Test path parameter
     runs-on: ubuntu-latest
     steps:
       # Checkout the action's code
       - name: Checkout action code
         uses: actions/checkout@v4
+        with:
+          path: 'action'
 
-      # Create a test dagger.json in the root
+      # Checkout the target repository
+      - name: Checkout dagger/agents
+        uses: actions/checkout@v4
+        with:
+          repository: 'dagger/agents'
+          path: 'with_path'
+
+      # Test with path parameter to the subdirectory
+      - name: Test with subdirectory path
+        id: test_subdir
+        uses: ./with_path/action
+        with:
+          path: 'melvin'
+
+      # Display result
+      - name: Display test results
+        run: |
+          VERSION="${{ steps.test_subdir.outputs.version }}"
+          
+          echo "Repository: dagger/agents (dagger.json in melvin subdirectory)"
+          echo "Dagger version: $VERSION"
+          
+          # Validate that we got a version
+          if [ -z "$VERSION" ]; then
+            echo "Error: No version was returned"
+            exit 1
+          fi
+          echo "✅ Test passed: Version detected as $VERSION"
+
+  test-local-file:
+    name: Test correctness of dagger version
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the action's code
+      - name: Checkout action code
+        uses: actions/checkout@v4
+        with:
+          path: 'action'
+
+      # Create a test dagger.json in a separate directory
       - name: Create test dagger.json
         run: |
-          echo '{"engineVersion": "0.9.3"}' > dagger.json
+          mkdir -p test-dir
+          echo '{"engineVersion": "0.9.3"}' > test-dir/dagger.json
 
-      # Test without path parameter
+      # Test with path parameter pointing to the directory with dagger.json
       - name: Test with local file
         id: test_local
-        uses: ./
+        uses: ./action
+        with:
+          path: 'test-dir'
 
       # Display result
       - name: Display test results
