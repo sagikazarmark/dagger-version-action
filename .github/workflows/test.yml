@@ -14,9 +14,10 @@ jobs:
       matrix:
         include:
           - repository: 'dagger/registry-redirect'
+            path_param: 'target-repo'
           - repository: 'dagger/agents'
-            path: 'melvin'
-    
+            path_param: 'target-repo/melvin'
+
     steps:
       # Checkout the action's code
       - name: Checkout action code
@@ -52,7 +53,7 @@ jobs:
         id: test_path
         uses: ./
         with:
-          path: "target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}"
+          path: ${{ matrix.path_param }}
 
       # Display result with path information
       - name: Display test results
