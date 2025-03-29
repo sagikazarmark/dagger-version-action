@@ -83,7 +83,7 @@ jobs:
         id: test_path
         uses: ./
         with:
-          path: ${{ matrix.path_param }}
+          path: "foo"
 
       # Display result with path information
       - name: Display test results
