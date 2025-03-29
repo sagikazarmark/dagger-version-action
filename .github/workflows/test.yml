@@ -59,17 +59,40 @@ jobs:
             using: 'composite'
             steps:
               - name: Debug inputs
-                shell: bash
-                run: |
-                  echo "Debug action running"
-                  echo "Input path: '${{ inputs.path }}'"
-                  echo "Path exists: $(test -d '${{ inputs.path }}' && echo 'Yes' || echo 'No')"
-                  echo "Files in path (if exists):"
-                  if [ -d "${{ inputs.path }}" ]; then
-                    ls -la "${{ inputs.path }}"
-                  else
-                    echo "Path does not exist as a directory"
-                  fi
+                uses: actions/github-script@v7
+                with:
+                  script: |
+                    const path = require('path');
+                    const fs = require('fs');
+                    
+                    // Get the input using core.getInput
+                    const inputPath = core.getInput('path');
+                    console.log(`Input path from core.getInput: '${inputPath}'`);
+                    
+                    // Check if the environment variable exists directly
+                    console.log(`INPUT_PATH environment variable: '${process.env.INPUT_PATH}'`);
+                    
+                    // List all environment variables starting with INPUT_
+                    console.log('All INPUT_ environment variables:');
+                    Object.keys(process.env)
+                      .filter(key => key.startsWith('INPUT_'))
+                      .forEach(key => {
+                        console.log(`  ${key}: '${process.env[key]}'`);
+                      });
+                    
+                    // Check if the path exists
+                    const pathExists = inputPath && fs.existsSync(inputPath);
+                    console.log(`Path exists: ${pathExists ? 'Yes' : 'No'}`);
+                    
+                    // List files in the path if it exists
+                    if (pathExists) {
+                      console.log(`Files in path:`);
+                      fs.readdirSync(inputPath).forEach(file => {
+                        console.log(`  - ${file}`);
+                      });
+                    } else {
+                      console.log(`Path does not exist as a directory`);
+                    }
           EOF
 
       # Use the debug action with the same parameters we'll use for the real action
@@ -83,7 +106,7 @@ jobs:
         id: test_path
         uses: ./
         with:
-          testPath: "foo"
+          path: ${{ matrix.path_param }}
 
       # Display result with path information
       - name: Display test results
