@@ -57,7 +57,7 @@ jobs:
           fi
           echo "✅ Test passed: Version detected as $VERSION"
 
-  test-local-file:
+  test-version-correctness:
     name: Test with local dagger.json
     runs-on: ubuntu-latest
     steps:
