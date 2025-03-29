@@ -11,17 +11,17 @@ jobs:
     name: Test basic functionality
     runs-on: ubuntu-latest
     steps:
+      # Checkout the target repository
+      -  name: Checkout dagger/registry-redirect
+         uses: actions/checkout@v4
+         with:
+           repository: 'dagger/registry-redirect'
+
       # Checkout the action's code
       - name: Checkout action code
         uses: actions/checkout@v4
         with:
           path: 'action'
-
-      # Checkout the target repository
-      - name: Checkout dagger/registry-redirect
-        uses: actions/checkout@v4
-        with:
-          repository: 'dagger/registry-redirect'
 
       # Test with path parameter to the repo root
       - name: Test with repo root path
@@ -47,17 +47,17 @@ jobs:
     name: Test path parameter
     runs-on: ubuntu-latest
     steps:
-      # Checkout the action's code
-      - name: Checkout action code
-        uses: actions/checkout@v4
-        with:
-          path: 'action'
-
       # Checkout the target repository
       - name: Checkout dagger/agents
         uses: actions/checkout@v4
         with:
           repository: 'dagger/agents'
+
+      # Checkout the action's code
+      - name: Checkout action code
+        uses: actions/checkout@v4
+        with:
+          path: 'action'
 
       # Test with path parameter to the subdirectory
       - name: Test with subdirectory path
@@ -82,7 +82,7 @@ jobs:
           echo "✅ Test passed: Version detected as $VERSION"
 
   test-local-file:
-    name: Test correctness of dagger version
+    name: Verify extracted dagger version
     runs-on: ubuntu-latest
     steps:
       # Checkout the action's code
