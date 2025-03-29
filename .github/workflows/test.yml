@@ -6,50 +6,49 @@ on:
   pull_request:
 
 jobs:
-  test-action:
-    name: Test Action
+  test-with-checkout:
+    name: Test with ${{ matrix.repository }}${{ matrix.path && format(' (Path: {0})', matrix.path) || '' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          # Test without path parameter (default behavior)
           - repository: 'dagger/registry-redirect'
-          # Test with path parameter
           - repository: 'dagger/agents'
             path: 'melvin'
-
+    
     steps:
-      # Checkout the action repository
-      - name: Checkout dagger-version-action
+      # Checkout the action's code
+      - name: Checkout action code
         uses: actions/checkout@v4
-
-      # Test API access without checkout (no path)
-      - name: Test API access (no checkout, no path)
-        id: dagger_version_api_no_path
-        if: ${{ !matrix.path }}
-        uses: ./
-        env:
-          GITHUB_REPOSITORY: ${{ matrix.repository }}
-          GITHUB_REF: refs/heads/main
-
-      # Test API access without checkout (with path)
-      - name: Test API access (no checkout, with path)
-        id: dagger_version_api_with_path
-        if: ${{ matrix.path }}
-        uses: ./
         with:
-          path: ${{ matrix.path }}
-        env:
-          GITHUB_REPOSITORY: ${{ matrix.repository }}
-          GITHUB_REF: refs/heads/main
-
-      # Display API results
-      - name: Display API result
+          path: 'action'
+      
+      # Checkout the target repository
+      - name: Checkout ${{ matrix.repository }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          path: 'target-repo'
+      
+      # Test with path parameter
+      - name: Test with path parameter
+        id: test_path
+        uses: ./action
+        with:
+          path: target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}
+      
+      # Display result
+      - name: Display test results
         run: |
-          if [ -n "${PATH_PARAM}" ]; then
-            echo "Dagger version (API access): ${{ steps.dagger_version_api_with_path.outputs.version }}"
-          else
-            echo "Dagger version (API access): ${{ steps.dagger_version_api_no_path.outputs.version }}"
+          REPO="${{ matrix.repository }}"
+          PATH_INFO="${{ matrix.path && format(' (Path: {0})', matrix.path) || '' }}"
+          VERSION="${{ steps.test_path.outputs.version }}"
+          
+          echo "Repository: $REPO$PATH_INFO"
+          echo "Dagger version: $VERSION"
+          
+          # Validate that we got a version
+          if [ -z "$VERSION" ]; then
+            echo "Error: No version was returned"
+            exit 1
           fi
-        env:
-          PATH_PARAM: ${{ matrix.path }}
