@@ -24,6 +24,20 @@ jobs:
         with:
           path: 'action'
       
+      # Debug: Check if action.yml exists
+      - name: Debug action files
+        run: |
+          echo "Checking for action definition files in action directory:"
+          ls -la action/
+          
+          if [ -f "action/action.yml" ]; then
+            echo "action.yml exists"
+          elif [ -f "action/action.yaml" ]; then
+            echo "action.yaml exists"
+          else
+            echo "No action definition file found!"
+          fi
+
       # Checkout the target repository
       - name: Checkout ${{ matrix.repository }}
         uses: actions/checkout@v4
@@ -44,10 +58,10 @@ jobs:
             ls -la "$TARGET_PATH"
           fi
 
-      # Test with path parameter
+      # Test with path parameter - use the correct path to the action
       - name: Test with path parameter
         id: test_path
-        uses: ./action.yaml
+        uses: ./action
         with:
           path: target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}
       
