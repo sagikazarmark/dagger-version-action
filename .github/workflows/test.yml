@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test-with-checkout:
@@ -30,10 +31,23 @@ jobs:
           repository: ${{ matrix.repository }}
           path: 'target-repo'
       
+      # Debug: Check if dagger.json exists in the target repository
+      - name: Debug dagger.json
+        run: |
+          TARGET_PATH="target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}"
+          echo "Checking for dagger.json in $TARGET_PATH"
+          if [ -f "$TARGET_PATH/dagger.json" ]; then
+            echo "dagger.json exists with content:"
+            cat "$TARGET_PATH/dagger.json"
+          else
+            echo "dagger.json does not exist in the target path"
+            ls -la "$TARGET_PATH"
+          fi
+
       # Test with path parameter
       - name: Test with path parameter
         id: test_path
-        uses: ./action
+        uses: ./action.yaml
         with:
           path: target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}
       
@@ -52,3 +66,4 @@ jobs:
             echo "Error: No version was returned"
             exit 1
           fi
+          echo "✅ Test passed: Version detected as $VERSION"
