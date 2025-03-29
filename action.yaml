@@ -25,7 +25,7 @@ runs:
           // Get the path parameter (defaults to empty string which means root)
           const dirPath = core.getInput('path');
           dirPath ? console.log(`Input path parameter: ${dirPath}`) :
-            console.warning('No path parameter provided')            
+            console.log('No path parameter provided')            
           
           // Debug environment
           console.log(`GITHUB_WORKSPACE: ${process.env.GITHUB_WORKSPACE}`);
