@@ -46,7 +46,7 @@ jobs:
       # Debug: Print the path that will be passed to the action
       - name: Debug path parameter
         run: |
-          echo "Path parameter: target-repo${{ matrix.path && format('/{0}', matrix.path) || '' }}"
+          echo "Path parameter: {{ matrix.path_param }}"
 
       # Test with path parameter - use explicit path with quotes
       - name: Test with path parameter
