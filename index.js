@@ -7,36 +7,6 @@ async function run() {
   try {
     // Get the path parameter (defaults to empty string which means root)
     const dirPath = core.getInput('path');
-    console.log(`Input path parameter: "${dirPath}"`);
-
-    // Debug environment
-    console.log(`GITHUB_WORKSPACE: ${process.env.GITHUB_WORKSPACE}`);
-    console.log(`Current working directory: ${process.cwd()}`);
-
-    // List files in GITHUB_WORKSPACE for debugging
-    console.log('Files in GITHUB_WORKSPACE:');
-    try {
-      const files = fs.readdirSync(process.env.GITHUB_WORKSPACE || '');
-      files.forEach(file => {
-        console.log(` - ${file}`);
-      });
-    } catch (error) {
-      console.log(`Error listing files: ${error.message}`);
-    }
-
-    // If dirPath is provided, list files in that directory too
-    if (dirPath) {
-      const fullDirPath = path.join(process.env.GITHUB_WORKSPACE || '', dirPath);
-      console.log(`Files in ${fullDirPath}:`);
-      try {
-        const files = fs.readdirSync(fullDirPath);
-        files.forEach(file => {
-          console.log(` - ${file}`);
-        });
-      } catch (error) {
-        console.log(`Error listing files in ${fullDirPath}: ${error.message}`);
-      }
-    }
 
     // Build the file path, joining the directory path if provided
     const jsonFileName = 'dagger.json';
@@ -44,16 +14,12 @@ async function run() {
       path.join(process.env.GITHUB_WORKSPACE || '', dirPath, jsonFileName) :
       path.join(process.env.GITHUB_WORKSPACE || '', jsonFileName);
 
-    console.log(`Looking for dagger.json at: ${filePath}`);
-
     // Build the API path
     const apiPath = dirPath ? `${dirPath}/${jsonFileName}` : jsonFileName;
-    console.log(`API path would be: ${apiPath}`);
 
     if (fs.existsSync(filePath)) { // File exists locally, read from the local file system
       console.log(`Found dagger.json at ${filePath}`);
       const content = fs.readFileSync(filePath, 'utf8');
-      console.log(`dagger.json content: ${content}`);
       let data;
 
       try {
@@ -63,7 +29,7 @@ async function run() {
           core.setFailed('Error: "engineVersion" field is missing in local dagger.json.');
         } else {
           core.setOutput('version', data.engineVersion);
-          console.log(`Version obtained from local file at: ${filePath}`);
+          console.log(`Version obtained from local file: ${data.engineVersion}`);
         }
       } catch (parseError) {
         core.setFailed(`Error parsing local dagger.json at ${filePath}: ${parseError.message}`);
@@ -85,27 +51,25 @@ async function run() {
 
         // The content is base64 encoded
         const content = Buffer.from(response.data.content, 'base64').toString('utf8');
-        console.log(`dagger.json content from API: ${content}`);
         let data;
 
         try {
           data = JSON.parse(content);
 
           if (!data.engineVersion) {
-            core.setFailed(`Error: "engineVersion" field is missing in dagger.json fetched via API from path: ${apiPath}`);
+            core.setFailed(`Error: "engineVersion" field is missing in dagger.json fetched via API.`);
           } else {
             core.setOutput('version', data.engineVersion);
-            console.log(`Version obtained from GitHub API from path: ${apiPath}`);
+            console.log(`Version obtained from GitHub API: ${data.engineVersion}`);
           }
         } catch (parseError) {
-          core.setFailed(`Error parsing dagger.json fetched via API from path ${apiPath}: ${parseError.message}`);
+          core.setFailed(`Error parsing dagger.json fetched via API: ${parseError.message}`);
         }
       } catch (error) {
-        console.log(`API error: ${JSON.stringify(error)}`);
         if (error.status === 404) {
           core.setFailed(`Error: dagger.json not found at path ${apiPath} via GitHub API.`);
         } else {
-          core.setFailed(`An error occurred while fetching dagger.json via API from path ${apiPath}: ${error.message}`);
+          core.setFailed(`An error occurred while fetching dagger.json via API: ${error.message}`);
         }
       }
     }

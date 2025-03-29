@@ -7,113 +7,45 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-with-checkout:
-    name: Test ${{ matrix.repository }}
+  test-repositories:
+    name: Test ${{ matrix.repository }}${{ matrix.use_path && ' with path' || ' without path' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - repository: 'dagger/registry-redirect'
-            path_param: 'target-repo'
+            use_path: false
           - repository: 'dagger/agents'
-            path_param: 'target-repo/melvin'
+            use_path: true
+            path: 'melvin'
 
     steps:
       # Checkout the action's code
       - name: Checkout action code
         uses: actions/checkout@v4
+        with:
+          path: 'action'
 
       # Checkout the target repository
       - name: Checkout ${{ matrix.repository }}
         uses: actions/checkout@v4
         with:
           repository: ${{ matrix.repository }}
-          path: 'target-repo'
-      
-      # Debug: Check if dagger.json exists in the target repository
-      - name: Debug dagger.json
-        run: |
-          TARGET_PATH="${{ matrix.path_param }}"
-          echo "Checking for dagger.json in $TARGET_PATH"
-          if [ -f "$TARGET_PATH/dagger.json" ]; then
-            echo "dagger.json exists with content:"
-            cat "$TARGET_PATH/dagger.json"
-          else
-            echo "dagger.json does not exist in the target path"
-            ls -la "$TARGET_PATH"
-          fi
+          path: '.'
 
-      # Create a debug action - this will help us verify input parameters
-      - name: Create debug action
-        run: |
-          mkdir -p debug-action
-          cat > debug-action/action.yml << 'EOF'
-          name: 'Debug Action'
-          description: 'Debug input parameters'
-          inputs:
-            path:
-              description: 'Path parameter to debug'
-              required: false
-              default: ''
-          runs:
-            using: 'composite'
-            steps:
-              - name: Debug inputs
-                uses: actions/github-script@v7
-                with:
-                  script: |
-                    const path = require('path');
-                    const fs = require('fs');
-                    
-                    // Get the input using core.getInput
-                    const inputPath = core.getInput('path');
-                    console.log(`Input path from core.getInput: '${inputPath}'`);
-                    
-                    // Check if the environment variable exists directly
-                    console.log(`INPUT_PATH environment variable: '${process.env.INPUT_PATH}'`);
-                    
-                    // List all environment variables starting with INPUT_
-                    console.log('All INPUT_ environment variables:');
-                    Object.keys(process.env)
-                      .filter(key => key.startsWith('INPUT_'))
-                      .forEach(key => {
-                        console.log(`  ${key}: '${process.env[key]}'`);
-                      });
-                    
-                    // Check if the path exists
-                    const pathExists = inputPath && fs.existsSync(inputPath);
-                    console.log(`Path exists: ${pathExists ? 'Yes' : 'No'}`);
-                    
-                    // List files in the path if it exists
-                    if (pathExists) {
-                      console.log(`Files in path:`);
-                      fs.readdirSync(inputPath).forEach(file => {
-                        console.log(`  - ${file}`);
-                      });
-                    } else {
-                      console.log(`Path does not exist as a directory`);
-                    }
-          EOF
-
-      # Use the debug action with the same parameters we'll use for the real action
-      - name: Debug path parameter
-        uses: ./debug-action
+      # Test with or without path parameter based on matrix
+      - name: Test action
+        id: test_action
+        uses: ./action
         with:
-          path: ${{ matrix.path_param }}
+          path: ${{ matrix.use_path && matrix.path || '' }}
 
-      # Test with path parameter - use explicit path with quotes
-      - name: Test with path parameter
-        id: test_path
-        uses: ./
-        with:
-          path: ${{ matrix.path_param }}
-
-      # Display result with path information
+      # Display result
       - name: Display test results
         run: |
           REPO="${{ matrix.repository }}"
-          PATH_INFO="${{ matrix.path && format(' (Path: {0})', matrix.path) || ' (Root)' }}"
-          VERSION="${{ steps.test_path.outputs.version }}"
+          PATH_INFO="${{ matrix.use_path && format(' (Path: {0})', matrix.path) || ' (Root)' }}"
+          VERSION="${{ steps.test_action.outputs.version }}"
           
           echo "Repository: $REPO$PATH_INFO"
           echo "Dagger version: $VERSION"
@@ -121,6 +53,39 @@ jobs:
           # Validate that we got a version
           if [ -z "$VERSION" ]; then
             echo "Error: No version was returned"
+            exit 1
+          fi
+          echo "✅ Test passed: Version detected as $VERSION"
+
+  test-local-file:
+    name: Test with local dagger.json
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the action's code
+      - name: Checkout action code
+        uses: actions/checkout@v4
+
+      # Create a test dagger.json in the root
+      - name: Create test dagger.json
+        run: |
+          echo '{"engineVersion": "0.9.3"}' > dagger.json
+
+      # Test without path parameter
+      - name: Test with local file
+        id: test_local
+        uses: ./
+
+      # Display result
+      - name: Display test results
+        run: |
+          VERSION="${{ steps.test_local.outputs.version }}"
+          
+          echo "Using local dagger.json"
+          echo "Dagger version: $VERSION"
+          
+          # Validate that we got the expected version
+          if [ "$VERSION" != "0.9.3" ]; then
+            echo "Error: Expected version 0.9.3, got $VERSION"
             exit 1
           fi
           echo "✅ Test passed: Version detected as $VERSION"
