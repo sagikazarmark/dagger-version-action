@@ -34,6 +34,8 @@ jobs:
       - name: Get Dagger version
         id: dagger_version
         uses: sagikazarmark/dagger-version-action
+        with:  # optional section
+          path: 'some/directory'
 
       - name: Run pipeline
         uses: dagger/dagger-for-github

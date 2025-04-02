@@ -1,0 +1,120 @@
+name: Test Dagger Version Action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-registry-redirect:
+    name: Test basic functionality
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the target repository
+      -  name: Checkout dagger/registry-redirect
+         uses: actions/checkout@v4
+         with:
+           repository: 'dagger/registry-redirect'
+
+      # Checkout the action's code
+      - name: Checkout action code
+        uses: actions/checkout@v4
+        with:
+          path: 'action'
+
+      # Test with path parameter to the repo root
+      - name: Test with repo root path
+        id: test_root
+        uses: ./action
+
+      # Display result
+      - name: Display test results
+        run: |
+          VERSION="${{ steps.test_root.outputs.version }}"
+          
+          echo "Repository: dagger/registry-redirect (dagger.json in root)"
+          echo "Dagger version: $VERSION"
+          
+          # Validate that we got a version
+          if [ -z "$VERSION" ]; then
+            echo "Error: No version was returned"
+            exit 1
+          fi
+          echo "✅ Test passed: Version detected as $VERSION"
+
+  test-agents-melvin:
+    name: Test path parameter
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the target repository
+      - name: Checkout dagger/agents
+        uses: actions/checkout@v4
+        with:
+          repository: 'dagger/agents'
+
+      # Checkout the action's code
+      - name: Checkout action code
+        uses: actions/checkout@v4
+        with:
+          path: 'action'
+
+      # Test with path parameter to the subdirectory
+      - name: Test with subdirectory path
+        id: test_subdir
+        uses: ./action
+        with:
+          path: 'melvin'
+
+      # Display result
+      - name: Display test results
+        run: |
+          VERSION="${{ steps.test_subdir.outputs.version }}"
+          
+          echo "Repository: dagger/agents (dagger.json in melvin subdirectory)"
+          echo "Dagger version: $VERSION"
+          
+          # Validate that we got a version
+          if [ -z "$VERSION" ]; then
+            echo "Error: No version was returned"
+            exit 1
+          fi
+          echo "✅ Test passed: Version detected as $VERSION"
+
+  test-local-file:
+    name: Verify extracted dagger version
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the action's code
+      - name: Checkout action code
+        uses: actions/checkout@v4
+        with:
+          path: 'action'
+
+      # Create a test dagger.json in a separate directory
+      - name: Create test dagger.json
+        run: |
+          mkdir -p test-dir
+          echo '{"engineVersion": "0.9.3"}' > test-dir/dagger.json
+
+      # Test with path parameter pointing to the directory with dagger.json
+      - name: Test with local file
+        id: test_local
+        uses: ./action
+        with:
+          path: 'test-dir'
+
+      # Display result
+      - name: Display test results
+        run: |
+          VERSION="${{ steps.test_local.outputs.version }}"
+          
+          echo "Using local dagger.json"
+          echo "Dagger version: $VERSION"
+          
+          # Validate that we got the expected version
+          if [ "$VERSION" != "0.9.3" ]; then
+            echo "Error: Expected version 0.9.3, got $VERSION"
+            exit 1
+          fi
+          echo "✅ Test passed: Version detected as $VERSION"

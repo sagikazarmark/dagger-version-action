@@ -1,0 +1,24 @@
+{
+  "name": "dagger-version-action",
+  "version": "1.0.0",
+  "description": "Get the required Dagger version from dagger.json",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build index.js -o dist",
+    "test": "jest"
+  },
+  "keywords": [
+    "github",
+    "actions",
+    "dagger"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.3"
+  }
+}
